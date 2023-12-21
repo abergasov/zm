@@ -1,28 +1,36 @@
 package testhelpers
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"zm/internal/config"
-	"zm/internal/logger"
-	"zm/internal/repository/sampler"
-	samplerService "zm/internal/service/sampler"
-	"zm/internal/storage/database"
-
 	"strings"
 	"testing"
+	"time"
+	"zm/internal/config"
+	"zm/internal/logger"
+	"zm/internal/repository/tree"
+	samplerService "zm/internal/service/sampler"
+	"zm/internal/storage/database"
 
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )
 
 type TestContainer struct {
+	Ctx context.Context
+
+	// repositories
+	RepositoryTrees *tree.Repository
+
+	// services deps
 	ServiceSampler *samplerService.Service
 }
 
 func GetClean(t *testing.T) *TestContainer {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	conf := getTestConfig()
-	prepareTestDB(t, &conf.ConfigDB)
+	prepareTestDB(ctx, t, &conf.ConfigDB)
 
 	dbConnect, err := database.InitDBConnect(&conf.ConfigDB, guessMigrationDir(t))
 	require.NoError(t, err)
@@ -33,16 +41,21 @@ func GetClean(t *testing.T) *TestContainer {
 
 	appLog := logger.NewAppSLogger("test")
 	// repo init
-	repo := sampler.InitRepo(dbConnect)
+	repoTree := tree.InitRepo(dbConnect)
 
 	// service init
-	serviceSampler := samplerService.InitService(appLog, repo)
+	serviceSampler := samplerService.InitService(appLog, repoTree)
+	t.Cleanup(func() {
+		cancel()
+	})
 	return &TestContainer{
-		ServiceSampler: serviceSampler,
+		Ctx:             ctx,
+		RepositoryTrees: repoTree,
+		ServiceSampler:  serviceSampler,
 	}
 }
 
-func prepareTestDB(t *testing.T, cnf *config.DBConf) {
+func prepareTestDB(ctx context.Context, t *testing.T, cnf *config.DBConf) {
 	dbConnect, err := database.InitDBConnect(&config.DBConf{
 		Address:        cnf.Address,
 		Port:           cnf.Port,
@@ -55,7 +68,7 @@ func prepareTestDB(t *testing.T, cnf *config.DBConf) {
 	defer func() {
 		require.NoError(t, dbConnect.Client().Close())
 	}()
-	if _, err = dbConnect.Client().Exec(fmt.Sprintf("CREATE DATABASE %s", cnf.DBName)); !isDatabaseExists(err) {
+	if _, err = dbConnect.Client().ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", cnf.DBName)); !isDatabaseExists(err) {
 		require.NoError(t, err)
 	}
 }
@@ -97,7 +110,9 @@ func guessMigrationDir(t *testing.T) string {
 }
 
 func cleanupDB(t *testing.T, connector database.DBConnector) {
-	tables := []string{"sampler"}
+	tables := []string{
+		tree.TableTrees,
+	}
 	for _, table := range tables {
 		_, err := connector.Client().Exec(fmt.Sprintf("TRUNCATE %s CASCADE", table))
 		require.NoError(t, err)
