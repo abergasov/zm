@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"go_project_template/internal/logger"
-	"go_project_template/internal/service/sampler"
 	"log/slog"
+	"zm/internal/logger"
+	"zm/internal/service/sampler"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"

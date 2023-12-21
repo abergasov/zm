@@ -1,9 +1,9 @@
 package logger_test
 
 import (
-	"go_project_template/internal/logger"
 	"log/slog"
 	"testing"
+	"zm/internal/logger"
 )
 
 func Test_SLogger(t *testing.T) {

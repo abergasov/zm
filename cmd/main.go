@@ -3,17 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go_project_template/internal/config"
-	"go_project_template/internal/logger"
-	samplerRepo "go_project_template/internal/repository/sampler"
-	"go_project_template/internal/routes"
-	samplerService "go_project_template/internal/service/sampler"
-	"go_project_template/internal/storage/database"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"zm/internal/config"
+	"zm/internal/logger"
+	samplerRepo "zm/internal/repository/sampler"
+	"zm/internal/routes"
+	samplerService "zm/internal/service/sampler"
+	"zm/internal/storage/database"
 )
 
 var (

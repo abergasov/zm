@@ -1,9 +1,9 @@
 package sampler
 
 import (
-	"go_project_template/internal/logger"
-	"go_project_template/internal/repository/sampler"
 	"log/slog"
+	"zm/internal/logger"
+	"zm/internal/repository/sampler"
 )
 
 type Service struct {

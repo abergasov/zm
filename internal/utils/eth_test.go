@@ -1,9 +1,9 @@
 package utils_test
 
 import (
-	"go_project_template/internal/utils"
 	"math/big"
 	"testing"
+	"zm/internal/utils"
 
 	"github.com/stretchr/testify/require"
 )

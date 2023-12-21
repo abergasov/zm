@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go_project_template/internal/logger"
-	"go_project_template/internal/routes"
 	"net/http"
 	"testing"
+	"zm/internal/logger"
+	"zm/internal/routes"
 
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"

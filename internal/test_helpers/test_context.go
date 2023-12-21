@@ -2,12 +2,12 @@ package testhelpers
 
 import (
 	"fmt"
-	"go_project_template/internal/config"
-	"go_project_template/internal/logger"
-	"go_project_template/internal/repository/sampler"
-	samplerService "go_project_template/internal/service/sampler"
-	"go_project_template/internal/storage/database"
 	"os"
+	"zm/internal/config"
+	"zm/internal/logger"
+	"zm/internal/repository/sampler"
+	samplerService "zm/internal/service/sampler"
+	"zm/internal/storage/database"
 
 	"strings"
 	"testing"
