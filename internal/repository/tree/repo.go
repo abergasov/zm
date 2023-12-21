@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	merkletree "zm/internal/service/merkle_tree"
 	"zm/internal/storage/database"
+
+	"github.com/google/uuid"
 )
 
 var (
-	TableTrees          = "merkle_trees"
-	tableClustersFields = []string{"mt_id", "tree"}
+	TableTrees       = "merkle_trees"
+	tableFilesFields = strings.Join([]string{"mt_id", "tree"}, ",")
 )
 
 type Repository struct {
@@ -21,20 +24,19 @@ func InitRepo(db database.DBConnector) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) SaveTree(ctx context.Context, tree *merkletree.Tree) (int64, error) {
+func (r *Repository) SaveTree(ctx context.Context, tree *merkletree.Tree) (uuid.UUID, error) {
+	treeID := uuid.New()
 	data, err := json.Marshal(tree)
 	if err != nil {
-		return 0, fmt.Errorf("unable to marshal tree: %w", err)
+		return uuid.Nil, fmt.Errorf("unable to marshal tree: %w", err)
 	}
-	res := r.db.Client().QueryRowContext(ctx, fmt.Sprintf(`INSERT INTO %s (tree) VALUES ($1) RETURNING mt_id;`, TableTrees), data)
-	var treeID int64
-	if err = res.Scan(&treeID); err != nil {
-		return 0, fmt.Errorf("unable to scan tree id: %w", err)
-	}
-	return treeID, nil
+	_, err = r.db.Client().ExecContext(ctx,
+		fmt.Sprintf(`INSERT INTO %s (%s) VALUES ($1, $2);`, TableTrees, tableFilesFields), treeID, data,
+	)
+	return treeID, err
 }
 
-func (r *Repository) GetTree(ctx context.Context, treeID int64) (*merkletree.Tree, error) {
+func (r *Repository) GetTree(ctx context.Context, treeID uuid.UUID) (*merkletree.Tree, error) {
 	var treeBytes []byte
 	err := r.db.Client().QueryRowContext(ctx, fmt.Sprintf(`SELECT tree FROM %s WHERE mt_id = $1;`, TableTrees), treeID).Scan(&treeBytes)
 	if err != nil {

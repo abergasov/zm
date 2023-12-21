@@ -9,6 +9,7 @@ import (
 	"time"
 	"zm/internal/config"
 	"zm/internal/logger"
+	"zm/internal/repository/files"
 	"zm/internal/repository/tree"
 	samplerService "zm/internal/service/sampler"
 	"zm/internal/storage/database"
@@ -22,6 +23,7 @@ type TestContainer struct {
 
 	// repositories
 	RepositoryTrees *tree.Repository
+	RepositoryFiles *files.Repository
 
 	// services deps
 	ServiceSampler *samplerService.Service
@@ -42,6 +44,7 @@ func GetClean(t *testing.T) *TestContainer {
 	appLog := logger.NewAppSLogger("test")
 	// repo init
 	repoTree := tree.InitRepo(dbConnect)
+	repoFiles := files.InitRepo(dbConnect)
 
 	// service init
 	serviceSampler := samplerService.InitService(appLog, repoTree)
@@ -51,6 +54,7 @@ func GetClean(t *testing.T) *TestContainer {
 	return &TestContainer{
 		Ctx:             ctx,
 		RepositoryTrees: repoTree,
+		RepositoryFiles: repoFiles,
 		ServiceSampler:  serviceSampler,
 	}
 }
@@ -112,6 +116,7 @@ func guessMigrationDir(t *testing.T) string {
 func cleanupDB(t *testing.T, connector database.DBConnector) {
 	tables := []string{
 		tree.TableTrees,
+		files.TableFiles,
 	}
 	for _, table := range tables {
 		_, err := connector.Client().Exec(fmt.Sprintf("TRUNCATE %s CASCADE", table))
