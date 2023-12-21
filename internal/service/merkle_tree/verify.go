@@ -46,9 +46,9 @@ func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 			proof[offset] = append(proof[offset], t.Tree[offset][0])
 			break
 		}
-		index = index / 2 // left child
+		index /= 2 // left child
 		if index%2 != 0 {
-			index = index - 1
+			index--
 		}
 		neighbor = index + 1
 		if neighbor == len(t.Tree[offset]) {

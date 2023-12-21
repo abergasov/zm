@@ -9,7 +9,7 @@ import (
 func Hash256(src string) string {
 	h := sha256.New()
 	h.Write([]byte(src))
-	return fmt.Sprintf("%x", h.Sum(nil)[:])
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func HashItems(src ...string) string {
