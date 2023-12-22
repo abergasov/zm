@@ -8,8 +8,10 @@ import (
 	"testing"
 	"zm/internal/logger"
 	"zm/internal/routes"
+	"zm/internal/utils"
 
 	"github.com/phayes/freeport"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +30,7 @@ func NewTestServer(t *testing.T, container *TestContainer) *TestServer {
 	}
 
 	appLog := logger.NewAppSLogger("")
-	appHTTPServer := routes.InitAppRouter(appLog, container.ServiceSampler, fmt.Sprintf(":%d", srv.appPort))
+	appHTTPServer := routes.InitAppRouter(appLog, container.ServiceFiles, "/tmp", fmt.Sprintf(":%d", srv.appPort))
 	t.Cleanup(func() {
 		require.NoError(t, appHTTPServer.Stop())
 	})
@@ -60,7 +62,20 @@ func (ts *TestServer) Delete(t *testing.T, path string, body any) *TestResponse 
 	return ts.Request(t, http.MethodDelete, path, body, nil)
 }
 
-func (ts *TestServer) Request(t *testing.T, method string, path string, body interface{}, headers map[string]string) *TestResponse {
+func (ts *TestServer) UploadFolder(t *testing.T, url string, files []string, metaJSON any) *TestResponse {
+	t.Helper()
+	u := fmt.Sprintf("http://localhost:%d%s", ts.appPort, url)
+	req, err := utils.CreateMultipartRequest(u, files, metaJSON)
+	require.NoError(t, err)
+	res, err := ts.client.Do(req)
+	require.NoError(t, err, "failed to make request to %s: %s", u, err)
+	t.Cleanup(func() {
+		require.NoError(t, res.Body.Close())
+	})
+	return &TestResponse{Res: res}
+}
+
+func (ts *TestServer) Request(t *testing.T, method, path string, body interface{}, headers map[string]string) *TestResponse {
 	t.Helper()
 
 	var b []byte

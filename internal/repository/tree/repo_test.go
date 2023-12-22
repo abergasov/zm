@@ -17,12 +17,10 @@ func TestRepo_CRUD(t *testing.T) {
 	tree := merkletree.NewTree(utils.Hash256, uuid.NewString(), uuid.NewString(), uuid.NewString())
 
 	// when
-	treeID, err := container.RepositoryTrees.SaveTree(container.Ctx, tree)
-	require.NoError(t, err)
+	require.NoError(t, container.RepositoryTrees.SaveTree(container.Ctx, tree))
 
 	// then
-	require.NotZero(t, treeID)
-	newTree, err := container.RepositoryTrees.GetTree(container.Ctx, treeID)
+	newTree, err := container.RepositoryTrees.GetTree(container.Ctx, tree.GetRoot())
 	require.NoError(t, err)
 	require.Equal(t, tree, newTree)
 }

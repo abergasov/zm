@@ -11,6 +11,7 @@ import (
 	"zm/internal/logger"
 	"zm/internal/repository/files"
 	"zm/internal/repository/tree"
+	"zm/internal/service/filer"
 	"zm/internal/storage/database"
 
 	"github.com/lib/pq"
@@ -26,6 +27,7 @@ type TestContainer struct {
 	RepositoryFiles *files.Repository
 
 	// services deps
+	ServiceFiles *filer.Service
 }
 
 func GetClean(t *testing.T) *TestContainer {
@@ -46,14 +48,18 @@ func GetClean(t *testing.T) *TestContainer {
 	repoFiles := files.InitRepo(dbConnect)
 
 	// service init
+	serviceFiler := filer.NewFilerService(appLog, repoTree, repoFiles, "/tmp")
 	t.Cleanup(func() {
 		cancel()
 	})
 	return &TestContainer{
-		Ctx:             ctx,
-		Logger:          appLog,
+		Ctx:    ctx,
+		Logger: appLog,
+
 		RepositoryTrees: repoTree,
 		RepositoryFiles: repoFiles,
+
+		ServiceFiles: serviceFiler,
 	}
 }
 

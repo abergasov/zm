@@ -18,7 +18,20 @@ type tCase struct {
 }
 
 func TestNewTree(t *testing.T) {
+	t.Run("should serve error on empty items", func(t *testing.T) {
+		// when
+		tree := merkletree.NewTree(utils.Hash256)
+
+		// then
+		require.Equal(t, 0, tree.Len())
+	})
 	table := []tCase{
+		{
+			name:      "1 known items",
+			items:     []string{"a"},
+			root:      "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+			expectLen: 1,
+		},
 		{
 			name:      "2 known items",
 			items:     []string{"a", "b"},
@@ -72,6 +85,15 @@ func TestNewTree(t *testing.T) {
 			})
 		})
 	}
+
+	t.Run("generate in loop", func(t *testing.T) {
+		items := make([]string, 0, 100_000)
+		for i := 1; i < 1_000; i++ {
+			items = append(items, uuid.NewString())
+			tree := merkletree.NewTree(utils.Hash256, items...)
+			require.True(t, tree.Len() > 0)
+		}
+	})
 }
 
 func checkTree(t *testing.T, tree *merkletree.Tree, tc tCase) {

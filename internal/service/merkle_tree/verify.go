@@ -10,7 +10,7 @@ var (
 )
 
 type TreeProof struct {
-	items [][]string
+	Items [][]string `json:"items"`
 }
 
 // GetProofForItem returns proof for item with given hash
@@ -18,6 +18,11 @@ type TreeProof struct {
 func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	if len(t.Tree) == 1 {
+		return &TreeProof{Items: [][]string{
+			{t.Tree[0][0]},
+		}}, nil
+	}
 	index, ok := t.ItemsMap[itemHash]
 	if !ok {
 		return nil, ErrItemNotFound
@@ -60,21 +65,21 @@ func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 		proof[offset] = append(proof[offset], t.Tree[offset][index], t.Tree[offset][neighbor])
 		offset++
 	}
-	return &TreeProof{items: proof}, nil
+	return &TreeProof{Items: proof}, nil
 }
 
 func (p *TreeProof) Verify(rootHash string) bool {
-	if len(p.items) < 2 {
+	if len(p.Items) < 2 {
 		return false
 	}
-	for i := range p.items {
-		if len(p.items[i]) == 1 {
-			return p.items[i][0] == rootHash
+	for i := range p.Items {
+		if len(p.Items[i]) == 1 {
+			return p.Items[i][0] == rootHash
 		}
-		itemsHash := utils.HashItems(p.items[i]...)
-		valid := itemsHash == p.items[i+1][0]
-		if len(p.items[i+1]) == 2 {
-			valid = valid || itemsHash == p.items[i+1][1]
+		itemsHash := utils.HashItems(p.Items[i]...)
+		valid := itemsHash == p.Items[i+1][0]
+		if len(p.Items[i+1]) == 2 {
+			valid = valid || itemsHash == p.Items[i+1][1]
 		}
 		if !valid {
 			return false

@@ -11,5 +11,6 @@ type FileMetadata struct {
 	FileID    uuid.UUID `json:"file_id" db:"f_id"`
 	Hash      string    `json:"hash" db:"file_hash"`
 	FileIndex int       `json:"file_index" db:"file_index"`
-	TreeID    uuid.UUID `json:"tree_id" db:"tree_id"`
+	FileName  string    `json:"file_name" db:"file_name"`
+	TreeRoot  string    `json:"tree_id" db:"tree_id"`
 }

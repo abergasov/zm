@@ -1,45 +1,57 @@
 package utils
 
 import (
-	"compress/gzip"
-	"context"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
-
-	"github.com/google/brotli/go/cbrotli"
+	"os"
+	"path/filepath"
 )
 
-func Get(ctx context.Context, url string) ([]byte, int, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to create request: %w", err)
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Accept-Encoding", "gzip, deflate, br")
+func CreateMultipartRequest(url string, filePaths []string, jsonData any) (*http.Request, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
 
-	client := http.DefaultClient
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to get data: %w", err)
-	}
-	defer resp.Body.Close()
-	var reader io.ReadCloser
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
-		reader, err = gzip.NewReader(resp.Body)
+	// Add files to the request
+	for _, filePath := range filePaths {
+		file, err := os.Open(filePath)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed to create gzip reader: %w", err)
+			return nil, err
 		}
-	case "br":
-		reader = cbrotli.NewReader(resp.Body)
-	default:
-		reader = resp.Body
+		defer file.Close() // nolint: gocritic // test helper
+
+		fileName := filepath.Base(filePath)
+		part, err := writer.CreateFormFile(fileName, filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err = io.Copy(part, file); err != nil {
+			return nil, err
+		}
 	}
-	defer reader.Close()
-	b, err := io.ReadAll(reader)
+
+	jsonBytes, err := json.Marshal(jsonData)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("unable to marshal json: %w", err)
 	}
-	return b, resp.StatusCode, nil
+
+	if err = writer.WriteField("meta", string(jsonBytes)); err != nil {
+		return nil, fmt.Errorf("unable to write json: %w", err)
+	}
+
+	if err = writer.Close(); err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	return request, nil
 }

@@ -15,45 +15,35 @@ func TestFiles_CRUD(t *testing.T) {
 	// given
 	container := testhelpers.GetClean(t)
 	tree := merkletree.NewTree(utils.Hash256, uuid.NewString(), uuid.NewString(), uuid.NewString())
-	treeID, err := container.RepositoryTrees.SaveTree(container.Ctx, tree)
-	require.NoError(t, err)
+	require.NoError(t, container.RepositoryTrees.SaveTree(container.Ctx, tree))
 
-	files := []*entities.File{
+	files := []*entities.FileMetadata{
 		{
-			Data: generateRandomBytes(),
-			Meta: &entities.FileMetadata{
-				FileIndex: 1,
-				Hash:      uuid.NewString(),
-				TreeID:    treeID,
-			},
+			FileIndex: 1,
+			Hash:      uuid.NewString(),
+			TreeRoot:  tree.GetRoot(),
 		},
 		{
-			Data: generateRandomBytes(),
-			Meta: &entities.FileMetadata{
-				FileIndex: 2,
-				Hash:      uuid.NewString(),
-				TreeID:    treeID,
-			},
+			FileIndex: 2,
+			Hash:      uuid.NewString(),
+			TreeRoot:  tree.GetRoot(),
 		},
 		{
-			Data: generateRandomBytes(),
-			Meta: &entities.FileMetadata{
-				FileIndex: 3,
-				Hash:      uuid.NewString(),
-				TreeID:    treeID,
-			},
+			FileIndex: 3,
+			Hash:      uuid.NewString(),
+			TreeRoot:  tree.GetRoot(),
 		},
 	}
 
 	// when
-	require.NoError(t, container.RepositoryFiles.SaveFiles(container.Ctx, treeID, files))
+	require.NoError(t, container.RepositoryFiles.SaveFiles(container.Ctx, tree.GetRoot(), files))
 
 	// then
 	for _, file := range files {
-		meta, err := container.RepositoryFiles.GetFile(container.Ctx, treeID, file.Meta.FileIndex)
+		meta, err := container.RepositoryFiles.GetFile(container.Ctx, tree.GetRoot(), file.FileIndex)
 		require.NoError(t, err)
-		file.Meta.FileID = meta.FileID
-		require.Equal(t, file.Meta, meta)
+		file.FileID = meta.FileID
+		require.Equal(t, file, meta)
 	}
 }
 

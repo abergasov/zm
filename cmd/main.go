@@ -10,9 +10,10 @@ import (
 	"time"
 	"zm/internal/config"
 	"zm/internal/logger"
-	samplerRepo "zm/internal/repository/sampler"
+	"zm/internal/repository/files"
+	"zm/internal/repository/tree"
 	"zm/internal/routes"
-	samplerService "zm/internal/service/sampler"
+	"zm/internal/service/filer"
 	"zm/internal/storage/database"
 )
 
@@ -43,13 +44,14 @@ func main() {
 	}()
 
 	appLog.Info("init repositories")
-	repo := samplerRepo.InitRepo(dbConn)
+	repoTrees := tree.InitRepo(dbConn)
+	repoFiles := files.InitRepo(dbConn)
 
 	appLog.Info("init services")
-	service := samplerService.InitService(appLog, repo)
+	service := filer.NewFilerService(appLog, repoTrees, repoFiles)
 
 	appLog.Info("init http service")
-	appHTTPServer := routes.InitAppRouter(appLog, service, fmt.Sprintf(":%d", appConf.AppPort))
+	appHTTPServer := routes.InitAppRouter(appLog, service, "/tmp", fmt.Sprintf(":%d", appConf.AppPort))
 	defer func() {
 		if err = appHTTPServer.Stop(); err != nil {
 			appLog.Fatal("unable to stop http service", err)
