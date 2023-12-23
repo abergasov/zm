@@ -135,7 +135,7 @@ func getTestDB(t *testing.T, dbName string) string {
 	testNameHash := fmt.Sprintf("%x", bs)
 	maxLen := 7
 
-	newDbName := fmt.Sprintf("%s_%s", dbName, strings.ToLower(testNameHash[:maxLen]))
-	t.Log("test db name:", newDbName)
-	return newDbName
+	newDBName := fmt.Sprintf("%s_%s", dbName, strings.ToLower(testNameHash[:maxLen]))
+	t.Log("test db name:", newDBName)
+	return newDBName
 }
