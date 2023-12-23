@@ -46,11 +46,3 @@ func TestFiles_CRUD(t *testing.T) {
 		require.Equal(t, file, meta)
 	}
 }
-
-func generateRandomBytes() []byte {
-	res := make([]byte, 100)
-	for i := range res {
-		res[i] = byte(i)
-	}
-	return res
-}

@@ -25,7 +25,7 @@ func (s *Service) ServeFile(ctx context.Context, treeRoot string, fileID int) (d
 		proof.Verify(treeRoot)
 		return nil, nil, fmt.Errorf("proof is not valid")
 	}
-	//todo fix file reading
+	// todo fix file reading
 	filePrefix := utils.GetFormatString(tree.GetItemsLen())
 	filePath := fmt.Sprintf("%s/%s/"+filePrefix+"_%s", s.filesFolder, treeRoot, fileMeta.FileIndex, fileMeta.FileName)
 	data, err = os.ReadFile(filePath)

@@ -11,7 +11,7 @@ import (
 
 var (
 	TableTrees       = "merkle_trees"
-	tableFilesFields = strings.Join([]string{"mt_id", "tree"}, ",")
+	tableFilesFields = strings.Join([]string{"mt_id", "tree"}, ",") // nolint: gocritic
 )
 
 type Repository struct {

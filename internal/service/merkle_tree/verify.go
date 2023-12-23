@@ -51,12 +51,6 @@ func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 			index--
 		}
 		neighbor = index + 1
-		//if neighbor == len(t.Tree[offset]) {
-		//	neighbor = index - 1
-		//}
-		//if index > neighbor {
-		//	index, neighbor = neighbor, index
-		//}
 		proof[offset] = append(proof[offset], t.Tree[offset][index], t.Tree[offset][neighbor])
 		offset++
 	}

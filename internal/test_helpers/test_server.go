@@ -31,7 +31,9 @@ func NewTestServer(t *testing.T, container *TestContainer) *TestServer {
 
 	appLog := logger.NewAppSLogger("")
 	appHTTPServer := routes.InitAppRouter(appLog, container.ServiceFiles, "/tmp", fmt.Sprintf(":%d", srv.appPort))
-	go appHTTPServer.Run()
+	go func() {
+		require.NoError(t, appHTTPServer.Run())
+	}()
 	return srv
 }
 

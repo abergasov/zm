@@ -43,8 +43,8 @@ func CreateMultipartRequest(url string, filePaths []string, jsonData any) (*http
 		return nil, fmt.Errorf("unable to write json: %w", err)
 	}
 
-	if err = writer.Close(); err != nil {
-		return nil, err
+	if errC := writer.Close(); errC != nil {
+		return nil, errC
 	}
 
 	request, err := http.NewRequest("POST", url, body)
