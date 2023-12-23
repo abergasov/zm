@@ -18,6 +18,7 @@ type tCase struct {
 }
 
 func TestNewTree(t *testing.T) {
+	//t.Skip()
 	t.Run("should serve error on empty items", func(t *testing.T) {
 		// when
 		tree := merkletree.NewTree(utils.Hash256)
@@ -29,8 +30,8 @@ func TestNewTree(t *testing.T) {
 		{
 			name:      "1 known items",
 			items:     []string{"a"},
-			root:      "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
-			expectLen: 1,
+			root:      "da3811154d59c4267077ddd8bb768fa9b06399c486e1fc00485116b57c9872f5",
+			expectLen: 2,
 		},
 		{
 			name:      "2 known items",
@@ -87,32 +88,52 @@ func TestNewTree(t *testing.T) {
 	}
 
 	t.Run("generate in loop", func(t *testing.T) {
-		items := make([]string, 0, 100_000)
-		for i := 1; i < 1_000; i++ {
+		// given
+		items := make([]string, 0, 1_000)
+		for i := 0; i < 1_000; i++ {
 			items = append(items, uuid.NewString())
 			tree := merkletree.NewTree(utils.Hash256, items...)
 			require.True(t, tree.Len() > 0)
+			for _, item := range items {
+				// when
+				itemHash := utils.Hash256(item)
+				proof, err := tree.GetProofForItem(itemHash)
+				require.NoError(t, err)
+
+				// then
+				require.Truef(t, proof.Verify(tree.GetRoot()), "proof is not valid for item %d", i)
+			}
 		}
 	})
 }
 
 func checkTree(t *testing.T, tree *merkletree.Tree, tc tCase) {
 	require.Equal(t, tc.expectLen, tree.Len())
+	expectItemsLen := len(tc.items)
+	if expectItemsLen%2 != 0 {
+		expectItemsLen++
+	}
+	require.Equal(t, expectItemsLen, tree.GetItemsLen())
 	if tc.root != "" {
 		require.Equal(t, tc.root, tree.GetRoot())
 	}
 
 	t.Run("get proof for item", func(t *testing.T) {
 		// given
+		badHash := utils.Hash256(uuid.NewString())
 		treeRoot := tree.GetRoot()
 
 		for _, item := range tc.items {
-			// when
+			// given
 			proof, err := tree.GetProofForItem(utils.Hash256(item))
 			require.NoError(t, err)
+			require.True(t, proof.Verify(treeRoot))
+
+			// when
+			proof.Items[0][0] = badHash
 
 			// then
-			require.True(t, proof.Verify(treeRoot))
+			require.False(t, proof.Verify(tree.GetRoot()))
 		}
 	})
 

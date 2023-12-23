@@ -18,11 +18,6 @@ type TreeProof struct {
 func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	if len(t.Tree) == 1 {
-		return &TreeProof{Items: [][]string{
-			{t.Tree[0][0]},
-		}}, nil
-	}
 	index, ok := t.ItemsMap[itemHash]
 	if !ok {
 		return nil, ErrItemNotFound
@@ -56,12 +51,12 @@ func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 			index--
 		}
 		neighbor = index + 1
-		if neighbor == len(t.Tree[offset]) {
-			neighbor = index - 1
-		}
-		if index > neighbor {
-			index, neighbor = neighbor, index
-		}
+		//if neighbor == len(t.Tree[offset]) {
+		//	neighbor = index - 1
+		//}
+		//if index > neighbor {
+		//	index, neighbor = neighbor, index
+		//}
 		proof[offset] = append(proof[offset], t.Tree[offset][index], t.Tree[offset][neighbor])
 		offset++
 	}
@@ -69,9 +64,6 @@ func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
 }
 
 func (p *TreeProof) Verify(rootHash string) bool {
-	if len(p.Items) < 2 {
-		return false
-	}
 	for i := range p.Items {
 		if len(p.Items[i]) == 1 {
 			return p.Items[i][0] == rootHash

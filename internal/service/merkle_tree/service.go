@@ -14,12 +14,32 @@ type Tree struct {
 }
 
 func NewTree[T any](hasher func(T) string, items ...T) *Tree {
+	if len(items) == 0 {
+		return &Tree{
+			Tree:     [][]string{},
+			ItemsMap: map[string]int{},
+		}
+	}
+	if len(items) == 1 {
+		itemHash := hasher(items[0])
+		return &Tree{
+			Tree: [][]string{
+				{
+					itemHash,
+					"",
+				},
+				{
+					utils.HashItems(itemHash),
+				},
+			},
+			ItemsMap: map[string]int{
+				hasher(items[0]): 0,
+			},
+		}
+	}
 	t := &Tree{
 		Tree:     make([][]string, merkleTreeDepth(len(items))),
 		ItemsMap: make(map[string]int, len(items)),
-	}
-	if len(items) == 0 {
-		return t
 	}
 	t.Tree[0] = make([]string, 0, len(items))
 
@@ -28,6 +48,9 @@ func NewTree[T any](hasher func(T) string, items ...T) *Tree {
 		itemHash := hasher(items[i])
 		t.Tree[0] = append(t.Tree[0], itemHash)
 		t.ItemsMap[itemHash] = i
+	}
+	if len(items)%2 != 0 {
+		t.Tree[0] = append(t.Tree[0], "")
 	}
 
 	offset := 0
@@ -41,6 +64,9 @@ func NewTree[T any](hasher func(T) string, items ...T) *Tree {
 				hashes = append(hashes, t.Tree[offset][i+1])
 			}
 			t.Tree[offset+1] = append(t.Tree[offset+1], utils.HashItems(hashes...))
+		}
+		if len(t.Tree[offset+1])%2 != 0 && len(t.Tree[offset+1]) != 1 {
+			t.Tree[offset+1] = append(t.Tree[offset+1], "")
 		}
 		offset++
 	}

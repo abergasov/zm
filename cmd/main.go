@@ -48,7 +48,7 @@ func main() {
 	repoFiles := files.InitRepo(dbConn)
 
 	appLog.Info("init services")
-	service := filer.NewFilerService(appLog, repoTrees, repoFiles)
+	service := filer.NewFilerService(appLog, repoTrees, repoFiles, "/tmp")
 
 	appLog.Info("init http service")
 	appHTTPServer := routes.InitAppRouter(appLog, service, "/tmp", fmt.Sprintf(":%d", appConf.AppPort))
