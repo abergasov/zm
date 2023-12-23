@@ -18,7 +18,6 @@ type tCase struct {
 }
 
 func TestNewTree(t *testing.T) {
-	t.Skip("skip test")
 	t.Run("should serve error on empty items", func(t *testing.T) {
 		// when
 		tree := merkletree.NewTree(utils.Hash256)
