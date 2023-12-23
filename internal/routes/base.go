@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"strings"
 	"zm/internal/logger"
-	"zm/internal/service/filer"
+	"zm/internal/service/receiver"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -14,12 +14,12 @@ type Server struct {
 	appAddr      string
 	filesFolder  string
 	log          logger.AppLogger
-	serviceFiles *filer.Service
+	serviceFiles *receiver.Service
 	httpEngine   *fiber.App
 }
 
 // InitAppRouter initializes the HTTP Server.
-func InitAppRouter(log logger.AppLogger, service *filer.Service, filesFolder, address string) *Server {
+func InitAppRouter(log logger.AppLogger, service *receiver.Service, filesFolder, address string) *Server {
 	app := &Server{
 		appAddr:      address,
 		filesFolder:  strings.TrimRight(filesFolder, "/"),

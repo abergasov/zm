@@ -1,35 +1,26 @@
-package tree
+package filestree
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	merkletree "zm/internal/service/merkle_tree"
-	"zm/internal/storage/database"
+
+	"github.com/jmoiron/sqlx"
 )
-
-var (
-	TableTrees       = "merkle_trees"
-	tableFilesFields = strings.Join([]string{"mt_id", "tree"}, ",") // nolint: gocritic
-)
-
-type Repository struct {
-	db database.DBConnector
-}
-
-func InitRepo(db database.DBConnector) *Repository {
-	return &Repository{db: db}
-}
 
 func (r *Repository) SaveTree(ctx context.Context, tree *merkletree.Tree) error {
+	return r.saveTree(ctx, r.db.Client(), tree)
+}
+
+func (r *Repository) saveTree(ctx context.Context, tx sqlx.ExecerContext, tree *merkletree.Tree) error {
 	treeID := tree.GetRoot()
 	data, err := json.Marshal(tree)
 	if err != nil {
 		return fmt.Errorf("unable to marshal tree: %w", err)
 	}
-	_, err = r.db.Client().ExecContext(ctx,
-		fmt.Sprintf(`INSERT INTO %s (%s) VALUES ($1, $2);`, TableTrees, tableFilesFields), treeID, data,
+	_, err = tx.ExecContext(ctx,
+		fmt.Sprintf(`INSERT INTO %s (%s) VALUES ($1, $2);`, TableTrees, tableTreesFields), treeID, data,
 	)
 	return err
 }

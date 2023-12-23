@@ -1,36 +1,21 @@
-package files
+package filestree
 
 import (
 	"context"
 	"fmt"
-	"strings"
 	"zm/internal/entities"
-	"zm/internal/storage/database"
 	"zm/internal/utils"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/google/uuid"
 )
 
-var (
-	TableFiles       = "files"
-	tableFilesFields = strings.Join([]string{
-		"f_id",
-		"file_index",
-		"tree_id",
-		"file_hash",
-		"file_name",
-	}, ",")
-)
-
-type Repository struct {
-	db database.DBConnector
-}
-
-func InitRepo(db database.DBConnector) *Repository {
-	return &Repository{db: db}
-}
-
 func (r *Repository) SaveFiles(ctx context.Context, treeRoot string, files []*entities.FileMetadata) error {
+	return r.saveFiles(ctx, r.db.Client(), treeRoot, files)
+}
+
+func (r *Repository) saveFiles(ctx context.Context, tx sqlx.ExecerContext, treeRoot string, files []*entities.FileMetadata) error {
 	sql, params := utils.GenerateBulkInsertSQL(TableFiles, utils.PQParamPlaceholder, files, func(entity *entities.FileMetadata) map[string]any {
 		return map[string]any{
 			"f_id":       uuid.New(),
@@ -40,7 +25,7 @@ func (r *Repository) SaveFiles(ctx context.Context, treeRoot string, files []*en
 			"file_name":  entity.FileName,
 		}
 	})
-	_, err := r.db.Client().ExecContext(ctx, sql, params...)
+	_, err := tx.ExecContext(ctx, sql, params...)
 	return err
 }
 

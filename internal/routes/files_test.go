@@ -45,14 +45,10 @@ func Test_ProcessFiles(t *testing.T) {
 
 			// then
 			res.RequireOk(t)
-			type fileResponse struct {
-				Data  []byte                `json:"data"`
-				Proof *merkletree.TreeProof `json:"proof"`
-			}
-			var file fileResponse
+			var file entities.FileResponse
 			res.RequireUnmarshal(t, &file)
 			require.True(t, file.Proof.Verify(tree.GetRoot()))
-			t.Logf("file %d is valid", i)
+			t.Logf("file %02d is valid, root: %s", i, tree.GetRoot())
 		}
 	})
 }

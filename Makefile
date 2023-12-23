@@ -11,11 +11,6 @@ init_repo: ## create necessary configs
 	cp configs/sample.common.env configs/common.env
 	cp configs/sample.app_conf.yml configs/app_conf.yml
 	cp configs/sample.app_conf_docker.yml configs/app_conf_docker.yml
-	find . -type f -name "*.go" -exec sed -i 's/go_project_template/${PROJECT_NAME}/g' {} +
-	find . -type f -name "*.mod" -exec sed -i 's/go_project_template/${PROJECT_NAME}/g' {} +
-	go mod tidy && go mod vendor
-	go install golang.org/x/tools/cmd/goimports@latest
-	goimports -local github.com/$(PROJECT_NAME) -w .
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -25,12 +20,6 @@ ifndef GOLANGCI_LINT
 	${info golangci-lint not found, installing golangci-lint@latest}
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 endif
-
-abi: ## generate abi struct
-	abigen --abi internal/service/web3/approver/erc20.abi.json --pkg approver --type Erc20 --out erc_20.go
-	mv erc_20.go internal/service/web3/approver/
-	abigen --abi internal/service/web3/swapper/stargate.abi.json --pkg swapper --type StargateRouter --out stargate_abi.go
-	mv stargate_abi.go internal/service/web3/swapper/
 
 gogen: ## generate code
 	${info generate code...}
@@ -57,7 +46,7 @@ lint: install-lint ## Runs linters
 lint_d:
 	docker run --rm -v ${PWD}:/app -w /app golangci/golangci-lint:v1.50 golangci-lint run --timeout 5m ./...
 
-stop: ## Stops the local environment
+stop: init_repo ## Stops the local environment
 	${info Stopping containers...}
 	docker container ls -q --filter name=${PROJECT_NAME} ; true
 	${info Dropping containers...}
@@ -75,7 +64,7 @@ build_in_docker: ## Builds binary in docker
 	@echo "-- building docker image"
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/binary ./cmd
 
-run: ## Runs binary local with environment in docker
+run: init_repo ## Runs binary local with environment in docker
 	${info Run app containered}
 	GIT_HASH=${FILE_HASH} docker compose -p ${PROJECT_NAME} up --build
 
@@ -90,5 +79,21 @@ coverage: ## Check test coverage is enough
 		exit 1; \
 	fi
 
-.PHONY: help install-lint test gogen lint stop dev_up build run init_repo migrate_new vulcheck coverage build_in_docker
+generate_files: clean ## Generate files for tests
+	mkdir -p data_folder
+	for i in $$(seq 1 10); do uuid=$$(uuidgen); echo "$$uuid" > data_folder/file_$$i.txt; done
+
+clean: ## Clean generated files
+	rm -rf data_folder
+
+upload: generate_files ## Uploads generated files to server
+	go run cmd/uploader/main.go
+
+loop:
+	@for i in {1..100}; do \
+		echo "Iteration $$i"; \
+		make test || { echo "Exiting loop due to test failure"; exit 1; }; \
+	done
+
+.PHONY: help install-lint test gogen lint stop dev_up build run init_repo migrate_new vulcheck coverage build_in_docker generate_files clean upload
 .DEFAULT_GOAL := help

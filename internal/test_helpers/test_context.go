@@ -2,6 +2,7 @@ package testhelpers
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"strings"
@@ -9,9 +10,8 @@ import (
 	"time"
 	"zm/internal/config"
 	"zm/internal/logger"
-	"zm/internal/repository/files"
-	"zm/internal/repository/tree"
-	"zm/internal/service/filer"
+	filestree "zm/internal/repository/files_tree"
+	"zm/internal/service/receiver"
 	"zm/internal/storage/database"
 
 	"github.com/lib/pq"
@@ -23,16 +23,15 @@ type TestContainer struct {
 	Logger logger.AppLogger
 
 	// repositories
-	RepositoryTrees *tree.Repository
-	RepositoryFiles *files.Repository
+	Repository *filestree.Repository
 
 	// services deps
-	ServiceFiles *filer.Service
+	ServiceFiles *receiver.Service
 }
 
 func GetClean(t *testing.T) *TestContainer {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	conf := getTestConfig()
+	conf := getTestConfig(t)
 	prepareTestDB(ctx, t, &conf.ConfigDB)
 
 	dbConnect, err := database.InitDBConnect(&conf.ConfigDB, guessMigrationDir(t))
@@ -44,11 +43,10 @@ func GetClean(t *testing.T) *TestContainer {
 
 	appLog := logger.NewAppSLogger("test")
 	// repo init
-	repoTree := tree.InitRepo(dbConnect)
-	repoFiles := files.InitRepo(dbConnect)
+	repoFilesTree := filestree.InitRepo(dbConnect)
 
 	// service init
-	serviceFiler := filer.NewFilerService(appLog, repoTree, repoFiles, "/tmp")
+	serviceFiler := receiver.NewFilerService(appLog, repoFilesTree, "/tmp")
 	t.Cleanup(func() {
 		cancel()
 	})
@@ -56,8 +54,7 @@ func GetClean(t *testing.T) *TestContainer {
 		Ctx:    ctx,
 		Logger: appLog,
 
-		RepositoryTrees: repoTree,
-		RepositoryFiles: repoFiles,
+		Repository: repoFilesTree,
 
 		ServiceFiles: serviceFiler,
 	}
@@ -81,7 +78,7 @@ func prepareTestDB(ctx context.Context, t *testing.T, cnf *config.DBConf) {
 	}
 }
 
-func getTestConfig() *config.AppConfig {
+func getTestConfig(t *testing.T) *config.AppConfig {
 	return &config.AppConfig{
 		AppPort: 0,
 		ConfigDB: config.DBConf{
@@ -89,7 +86,7 @@ func getTestConfig() *config.AppConfig {
 			Port:           "5449",
 			User:           "aHAjeK",
 			Pass:           "AOifjwelmc8dw",
-			DBName:         "sybill_test",
+			DBName:         getTestDB(t, "sybill_test"),
 			MaxConnections: 10,
 		},
 	}
@@ -119,11 +116,26 @@ func guessMigrationDir(t *testing.T) string {
 
 func cleanupDB(t *testing.T, connector database.DBConnector) {
 	tables := []string{
-		tree.TableTrees,
-		files.TableFiles,
+		filestree.TableFiles,
+		filestree.TableTrees,
 	}
+	tx, err := connector.Client().Beginx()
+	require.NoError(t, err)
 	for _, table := range tables {
-		_, err := connector.Client().Exec(fmt.Sprintf("TRUNCATE %s CASCADE", table))
+		_, err := tx.Exec(fmt.Sprintf("DELETE FROM %s", table))
 		require.NoError(t, err)
 	}
+	require.NoError(t, tx.Commit())
+}
+
+func getTestDB(t *testing.T, dbName string) string {
+	h := sha256.New()
+	h.Write([]byte(t.Name()))
+	bs := h.Sum(nil)
+	testNameHash := fmt.Sprintf("%x", bs)
+	maxLen := 7
+
+	newDbName := fmt.Sprintf("%s_%s", dbName, strings.ToLower(testNameHash[:maxLen]))
+	t.Log("test db name:", newDbName)
+	return newDbName
 }

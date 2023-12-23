@@ -99,6 +99,9 @@ func (t *Tree) Len() int {
 func (t *Tree) GetRoot() string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	if len(t.Tree) == 0 {
+		return ""
+	}
 	return t.Tree[t.Len()-1][0]
 }
 
@@ -106,5 +109,8 @@ func (t *Tree) GetRoot() string {
 func (t *Tree) GetItemsLen() int {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	if len(t.Tree) == 0 {
+		return 0
+	}
 	return len(t.Tree[0])
 }

@@ -10,10 +10,9 @@ import (
 	"time"
 	"zm/internal/config"
 	"zm/internal/logger"
-	"zm/internal/repository/files"
-	"zm/internal/repository/tree"
+	filestree "zm/internal/repository/files_tree"
 	"zm/internal/routes"
-	"zm/internal/service/filer"
+	"zm/internal/service/receiver"
 	"zm/internal/storage/database"
 )
 
@@ -44,11 +43,10 @@ func main() {
 	}()
 
 	appLog.Info("init repositories")
-	repoTrees := tree.InitRepo(dbConn)
-	repoFiles := files.InitRepo(dbConn)
+	repoFilesTrees := filestree.InitRepo(dbConn)
 
 	appLog.Info("init services")
-	service := filer.NewFilerService(appLog, repoTrees, repoFiles, "/tmp")
+	service := receiver.NewFilerService(appLog, repoFilesTrees, "/tmp")
 
 	appLog.Info("init http service")
 	appHTTPServer := routes.InitAppRouter(appLog, service, "/tmp", fmt.Sprintf(":%d", appConf.AppPort))

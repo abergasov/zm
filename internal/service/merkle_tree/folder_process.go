@@ -1,10 +1,9 @@
 package merkletree
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
 	"os"
+	"zm/internal/utils"
 )
 
 type FileMeta struct {
@@ -28,7 +27,7 @@ func CalculateTreeForFolder(folderPath string) (*Tree, []FileMeta, error) {
 			Name: files[i].Name(),
 			Path: fmt.Sprintf("%s/%s", folderPath, files[i].Name()),
 		}
-		fileHash, errH := getFileHash(fContainer.Path)
+		fileHash, errH := utils.GetFileHash(fContainer.Path)
 		if errH != nil {
 			return nil, nil, fmt.Errorf("unable to get file hash: %w", errH)
 		}
@@ -40,18 +39,4 @@ func CalculateTreeForFolder(folderPath string) (*Tree, []FileMeta, error) {
 	return NewTree(func(f FileMeta) string {
 		return fileHashMap[f.Name]
 	}, fileList...), fileList, err
-}
-
-func getFileHash(filePath string) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("unable to open file: %w", err)
-	}
-	defer f.Close()
-
-	h := sha256.New()
-	if _, err = io.Copy(h, f); err != nil {
-		return "", fmt.Errorf("unable to copy file: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

@@ -65,10 +65,11 @@ func (s *Server) serveFiles(ctx *fiber.Ctx) error {
 	}
 	data, proof, err := s.serviceFiles.ServeFile(ctx.Context(), treeRoot, fileID)
 	if err != nil {
+		s.log.Error("failed serve file", err, slog.String("treeRoot", treeRoot), slog.Int("fileID", fileID))
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-	return ctx.JSON(fiber.Map{
-		"data":  data,
-		"proof": proof,
+	return ctx.JSON(entities.FileResponse{
+		Data:  data,
+		Proof: proof,
 	})
 }
