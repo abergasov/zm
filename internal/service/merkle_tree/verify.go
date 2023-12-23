@@ -16,8 +16,6 @@ type TreeProof struct {
 // GetProofForItem returns proof for item with given hash
 // return hash of neighbor and path to root
 func (t *Tree) GetProofForItem(itemHash string) (*TreeProof, error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
 	index, ok := t.ItemsMap[itemHash]
 	if !ok {
 		return nil, ErrItemNotFound

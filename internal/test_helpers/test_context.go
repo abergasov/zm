@@ -18,6 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testStorageFolder = "/tmp/zm"
+)
+
 type TestContainer struct {
 	Ctx    context.Context
 	Logger logger.AppLogger
@@ -46,7 +50,7 @@ func GetClean(t *testing.T) *TestContainer {
 	repoFilesTree := filestree.InitRepo(dbConnect)
 
 	// service init
-	serviceFiler := receiver.NewFilerService(appLog, repoFilesTree, "/tmp")
+	serviceFiler := receiver.NewReceiverService(appLog, repoFilesTree, testStorageFolder)
 	t.Cleanup(func() {
 		cancel()
 	})

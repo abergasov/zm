@@ -86,7 +86,7 @@ generate_files: clean ## Generate files for tests
 clean: ## Clean generated files
 	rm -rf data_folder
 
-upload: generate_files ## Uploads generated files to server
+upload: # generate_files ## Uploads generated files to server
 	go run cmd/uploader/main.go
 
 loop:

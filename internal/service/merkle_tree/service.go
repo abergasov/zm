@@ -2,12 +2,10 @@ package merkletree
 
 import (
 	"math"
-	"sync"
 	"zm/internal/utils"
 )
 
 type Tree struct {
-	mu sync.RWMutex
 	// each slice is a level of Tree. at the end we will have only one slice with root
 	Tree     [][]string     `json:"tree"`
 	ItemsMap map[string]int `json:"items_map"` // track items index by hash in Tree's [0]
@@ -90,15 +88,11 @@ func merkleTreeDepth(items int) int {
 
 // Len returns the number of levels in the Merkle tree.
 func (t *Tree) Len() int {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
 	return len(t.Tree)
 }
 
 // GetRoot returns the root hash of the Merkle tree.
 func (t *Tree) GetRoot() string {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
 	if len(t.Tree) == 0 {
 		return ""
 	}
@@ -107,8 +101,6 @@ func (t *Tree) GetRoot() string {
 
 // GetItemsLen returns the number of items in the Merkle tree.
 func (t *Tree) GetItemsLen() int {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
 	if len(t.Tree) == 0 {
 		return 0
 	}

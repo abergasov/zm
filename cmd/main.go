@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	confFile = flag.String("config", "configs/app_conf.yml", "Configs file path")
-	appHash  = os.Getenv("GIT_HASH")
+	confFile      = flag.String("config", "configs/app_conf.yml", "Configs file path")
+	appHash       = os.Getenv("GIT_HASH")
+	storageFolder = "/tmp/zm"
 )
 
 func main() {
@@ -46,10 +47,10 @@ func main() {
 	repoFilesTrees := filestree.InitRepo(dbConn)
 
 	appLog.Info("init services")
-	service := receiver.NewFilerService(appLog, repoFilesTrees, "/tmp")
+	service := receiver.NewReceiverService(appLog, repoFilesTrees, storageFolder)
 
 	appLog.Info("init http service")
-	appHTTPServer := routes.InitAppRouter(appLog, service, "/tmp", fmt.Sprintf(":%d", appConf.AppPort))
+	appHTTPServer := routes.InitAppRouter(appLog, service, storageFolder, fmt.Sprintf(":%d", appConf.AppPort))
 	defer func() {
 		if err = appHTTPServer.Stop(); err != nil {
 			appLog.Fatal("unable to stop http service", err)
