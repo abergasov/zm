@@ -36,6 +36,8 @@ For quick rebuild and build proof tree have map, which allow by hash quickly fin
 
 See `internal/service/merkle_tree/verify.go` for more details.
 
+In current implementation tree-root used as Primary Key, so it can be used for quick fetch data. Otherwise it give restrictions that every upload should be unique. Depending of business requirements, it can be changed to another schema to allow upload same tree several times or allow upload save files for different users only.
+
 #### File Storage
 File storage is simple file system storage, which store files in `/tmp/zm` folder. It is not production ready, but it can be replaced by some scalable storage.
 
