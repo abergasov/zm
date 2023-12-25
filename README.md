@@ -39,9 +39,20 @@ See `internal/service/merkle_tree/verify.go` for more details.
 In current implementation tree-root used as Primary Key, so it can be used for quick fetch data. Otherwise it give restrictions that every upload should be unique. Depending of business requirements, it can be changed to another schema to allow upload same tree several times or allow upload save files for different users only.
 
 #### File Storage
-File storage is simple file system storage, which store files in `/tmp/zm` folder. It is not production ready, but it can be replaced by some scalable storage.
+For simplification app store files in `/tmp/zm` folder. It is not production ready, but it can be replaced by some scalable storage.
 
-As example, another test solution can be used for adopt as flexible storage https://github.com/abergasov/extendable_storage
+I include reference to another repo which can be used as storage - https://github.com/abergasov/extendable_storage 
+
+Since methods are simply get and save, it can be used for small files.
+```go
+// see https://github.com/abergasov/extendable_storage/blob/master/internal/service/receiver/abstract.go
+type DataReceiver interface {
+  GetFile(ctx context.Context, fileID string) ([]byte, error)
+  SaveFile(ctx context.Context, fileID string, data []byte) error
+}
+```
+
+> For bigger files can be added some streaming process to avoid load big amount of data in memory
 
 so final flow may be:
 * user upload file to app
